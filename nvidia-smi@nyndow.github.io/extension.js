@@ -349,8 +349,6 @@ class GpuIndicator extends PanelMenu.Button {
     }
 
     _buildMenu() {
-        this.menu.box.add_style_class_name('nvidia-smi-menu');
-
         this._errorItem = new PopupMenu.PopupMenuItem('', {reactive: false, can_focus: false});
         this._errorItem.label.add_style_class_name('nvidia-smi-message');
         this._errorItem.label.clutter_text.line_wrap = true;
