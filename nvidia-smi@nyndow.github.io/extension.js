@@ -385,9 +385,6 @@ class GpuIndicator extends PanelMenu.Button {
         this._rawItem.menu.box.add_child(this._rawScroll);
         this.menu.addMenuItem(this._rawItem);
 
-        this._updatedItem = new PopupMenu.PopupSeparatorMenuItem('');
-        this.menu.addMenuItem(this._updatedItem);
-
         const copyItem = new PopupMenu.PopupMenuItem(_('Copy nvidia-smi Output'));
         copyItem.connect('activate', () => {
             if (this._rawOutput)
@@ -489,7 +486,6 @@ class GpuIndicator extends PanelMenu.Button {
         } finally {
             this._detailPollInFlight = false;
         }
-        this._updatedItem.label.text = _('Updated %s').replace('%s', GLib.DateTime.new_now_local().format('%H:%M:%S'));
     }
 
     _startDetailPolling() {
