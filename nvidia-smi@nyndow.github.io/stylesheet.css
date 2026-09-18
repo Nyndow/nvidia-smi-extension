@@ -23,6 +23,10 @@
     color: #9a9996;
 }
 
+.nvidia-smi-menu {
+    max-width: 420px;
+}
+
 /* --- Dropdown: per-GPU summary ------------------------------------------ */
 
 .nvidia-smi-gpu-box {

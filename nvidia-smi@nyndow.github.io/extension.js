@@ -105,7 +105,10 @@ function resolveProcessName(pid, rawName) {
         if (ok && bytes.length > 0) {
             const argv0 = new TextDecoder().decode(bytes).split('\0')[0];
             const name = shortProcessName(argv0);
-            if (name)
+            // Some processes (Chrome renderers, Postgres workers, ...) rewrite their own
+            // argv to show flags/status in `ps`, so argv0 may not be a real path at all.
+            // A genuine binary name/path never contains whitespace.
+            if (name && !/\s/.test(name))
                 return name;
         }
     } catch {
@@ -346,6 +349,8 @@ class GpuIndicator extends PanelMenu.Button {
     }
 
     _buildMenu() {
+        this.menu.box.add_style_class_name('nvidia-smi-menu');
+
         this._errorItem = new PopupMenu.PopupMenuItem('', {reactive: false, can_focus: false});
         this._errorItem.label.add_style_class_name('nvidia-smi-message');
         this._errorItem.label.clutter_text.line_wrap = true;
