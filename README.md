@@ -7,6 +7,8 @@ clicked.
 Requires the NVIDIA proprietary driver with `nvidia-smi` on `PATH`. If it's
 missing or fails, the indicator shows `N/A`.
 
+![VRAM usage in the top bar with the nvidia-smi dropdown open](screenshot.webp)
+
 ## Installation
 
 ```sh
