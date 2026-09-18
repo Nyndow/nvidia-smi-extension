@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="nvidia-smi">
+  <schema id="org.gnome.shell.extensions.nvidia-smi"
+          path="/org/gnome/shell/extensions/nvidia-smi/">
+    <key name="poll-interval" type="i">
+      <range min="1" max="60"/>
+      <default>2</default>
+      <summary>Poll interval in seconds</summary>
+      <description>
+        How often nvidia-smi is queried for the top-bar value, and for the
+        dropdown while it is open. The extension backs off to 30 seconds by
+        itself while nvidia-smi keeps failing.
+      </description>
+    </key>
+    <key name="display-mode" type="s">
+      <choices>
+        <choice value="percent"/>
+        <choice value="gib"/>
+        <choice value="mib"/>
+      </choices>
+      <default>'percent'</default>
+      <summary>Top-bar display mode</summary>
+      <description>
+        What the top-bar label shows: VRAM usage as a percentage ("8%"),
+        in gibibytes ("1.2/15.9 GiB"), or in mebibytes ("1262/16303 MiB").
+      </description>
+    </key>
+    <key name="show-icon" type="b">
+      <default>true</default>
+      <summary>Show the GPU icon</summary>
+      <description>Show a GPU icon next to the top-bar value.</description>
+    </key>
+    <key name="warning-threshold" type="i">
+      <range min="0" max="100"/>
+      <default>80</default>
+      <summary>Warning threshold (percent)</summary>
+      <description>
+        VRAM usage percentage at or above which the top-bar value turns
+        yellow. 0 disables the warning colour.
+      </description>
+    </key>
+    <key name="critical-threshold" type="i">
+      <range min="0" max="100"/>
+      <default>90</default>
+      <summary>Critical threshold (percent)</summary>
+      <description>
+        VRAM usage percentage at or above which the top-bar value turns red.
+        0 disables the critical colour.
+      </description>
+    </key>
+  </schema>
+</schemalist>
