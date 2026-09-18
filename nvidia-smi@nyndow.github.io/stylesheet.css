@@ -23,15 +23,12 @@
     color: #9a9996;
 }
 
-.nvidia-smi-menu {
-    max-width: 420px;
-}
-
 /* --- Dropdown: per-GPU summary ------------------------------------------ */
 
 .nvidia-smi-gpu-box {
     spacing: 4px;
     padding: 2px 0;
+    max-width: 380px;
 }
 
 .nvidia-smi-gpu-name {
@@ -61,6 +58,7 @@
 
 .nvidia-smi-process-row {
     spacing: 12px;
+    max-width: 380px;
 }
 
 .nvidia-smi-process-detail {
