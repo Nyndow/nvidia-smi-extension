@@ -1,0 +1,7 @@
+{
+    "uuid": "nvidia-smi@nyndow.github.io",
+    "name": "NVIDIA SMI Indicator",
+    "description": "Shows live GPU VRAM usage in the top bar; click for full nvidia-smi output.",
+    "shell-version": ["46"],
+    "url": "https://github.com/Nyndow/nvidia-smi-extension"
+}
