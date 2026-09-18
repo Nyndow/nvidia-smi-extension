@@ -1,11 +1,87 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+
+/* --- Top bar ------------------------------------------------------------ */
+
+.nvidia-smi-indicator {
+    spacing: 4px;
+}
+
+.nvidia-smi-panel-label {
+    font-feature-settings: "tnum";
+}
+
+/* Pressure states: applied to the indicator box, inherited by icon and label */
+.nvidia-smi-warning {
+    color: #f8e45c;
+}
+
+.nvidia-smi-critical {
+    color: #ff7b63;
+}
+
+.nvidia-smi-error {
+    color: #9a9996;
+}
+
+/* --- Dropdown: per-GPU summary ------------------------------------------ */
+
+.nvidia-smi-gpu-box {
+    spacing: 4px;
+    padding: 2px 0;
+}
+
+.nvidia-smi-gpu-name {
+    font-weight: bold;
+}
+
+.nvidia-smi-gpu-stats {
+    font-size: 0.9em;
+}
+
+.nvidia-smi-bar {
+    height: 6px;
+    min-height: 6px;
+    -bar-track-color: rgba(128, 128, 128, 0.35);
+    -bar-fill-color: #3584e4;
+}
+
+.nvidia-smi-bar-warning {
+    -bar-fill-color: #e5a50a;
+}
+
+.nvidia-smi-bar-critical {
+    -bar-fill-color: #e01b24;
+}
+
+/* --- Dropdown: processes ------------------------------------------------ */
+
+.nvidia-smi-process-row {
+    spacing: 12px;
+}
+
+.nvidia-smi-process-detail {
+    font-size: 0.9em;
+}
+
+.nvidia-smi-process-memory {
+    font-feature-settings: "tnum";
+}
+
+/* --- Dropdown: raw output & messages ------------------------------------ */
+
 .nvidia-smi-monospace {
     font-family: monospace;
+    font-size: 0.9em;
     white-space: pre;
     padding: 8px;
 }
 
 .nvidia-smi-scrollview {
     min-width: 400px;
-    min-height: 100px;
-    max-height: 600px;
+    min-height: 60px;
+    max-height: 480px;
+}
+
+.nvidia-smi-message {
+    font-style: italic;
 }

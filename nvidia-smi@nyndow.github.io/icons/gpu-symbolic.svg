@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <!-- Graphics card: body with a fan, mounting bracket on the left, PCIe fingers below -->
+  <path style="fill:#2e3436" fill-rule="evenodd" d="M1.5 3A1.5 1.5 0 0 0 0 4.5v6A1.5 1.5 0 0 0 1.5 12H2v1.5a.5.5 0 0 0 .5.5H3a.5.5 0 0 0 .5-.5V12H5v1a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-1h.5A1.5 1.5 0 0 0 16 10.5v-6A1.5 1.5 0 0 0 14.5 3zm8.5 1a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7zm0 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM2.5 5h3v1h-3zm0 2h2v1h-2zm0 2h3v1h-3z"/>
+</svg>
