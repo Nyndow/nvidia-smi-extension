@@ -35,6 +35,11 @@ const RAW_PANE_MAX_HEIGHT = 480;
 const LEVEL_CLASSES = ['nvidia-smi-warning', 'nvidia-smi-critical', 'nvidia-smi-error'];
 const BAR_LEVEL_CLASSES = ['nvidia-smi-bar-warning', 'nvidia-smi-bar-critical'];
 
+// St.BoxLayout's `vertical` is deprecated since GNOME 48; `orientation` doesn't exist before it.
+const VERTICAL_BOX = 'orientation' in St.BoxLayout.prototype
+    ? {orientation: Clutter.Orientation.VERTICAL}
+    : {vertical: true};
+
 // --- nvidia-smi subprocess --------------------------------------------------
 
 class NvidiaSmiError extends Error {
@@ -206,7 +211,7 @@ class GpuRow extends PopupMenu.PopupBaseMenuItem {
     _init() {
         super._init({reactive: false, can_focus: false});
 
-        const box = new St.BoxLayout({vertical: true, x_expand: true, style_class: 'nvidia-smi-gpu-box'});
+        const box = new St.BoxLayout({...VERTICAL_BOX, x_expand: true, style_class: 'nvidia-smi-gpu-box'});
 
         const header = new St.BoxLayout({x_expand: true});
         this._name = new St.Label({style_class: 'nvidia-smi-gpu-name', x_expand: true});
@@ -370,7 +375,7 @@ class GpuIndicator extends PanelMenu.Button {
         });
         this._rawLabel.clutter_text.line_wrap = false;
         // St.ScrollView only accepts an StScrollable child (BoxLayout/Viewport), not a bare Label
-        const rawBox = new St.BoxLayout({vertical: true, x_expand: true, y_expand: true});
+        const rawBox = new St.BoxLayout({...VERTICAL_BOX, x_expand: true, y_expand: true});
         rawBox.add_child(this._rawLabel);
         this._rawScroll = new St.ScrollView({
             style_class: 'nvidia-smi-scrollview',

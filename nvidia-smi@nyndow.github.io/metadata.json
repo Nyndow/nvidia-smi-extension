@@ -2,7 +2,7 @@
     "uuid": "nvidia-smi@nyndow.github.io",
     "name": "NVIDIA SMI Indicator",
     "description": "Shows live GPU VRAM usage in the top bar; click for a per-GPU summary, the processes using the GPU, and the full nvidia-smi output.",
-    "shell-version": ["46"],
+    "shell-version": ["46", "47", "48", "49", "50"],
     "settings-schema": "org.gnome.shell.extensions.nvidia-smi",
     "gettext-domain": "nvidia-smi",
     "url": "https://github.com/Nyndow/nvidia-smi-extension"

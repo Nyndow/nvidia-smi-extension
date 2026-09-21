@@ -33,7 +33,7 @@ gnome-extensions enable nvidia-smi@nyndow.github.io
 Reload GNOME Shell first if it doesn't show up: `Alt+F2` → `r` → `Enter`
 (X11), or log out/in (Wayland).
 
-Tested on GNOME Shell 46.
+Supports GNOME Shell 46 to 50 (tested on 46).
 
 ## Settings
 
