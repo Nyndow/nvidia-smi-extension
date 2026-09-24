@@ -9,7 +9,7 @@ import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Ex
 
 import {DISPLAY_MODES} from './format.js';
 
-// Built lazily: gettext needs the preferences object to exist, so it can't run at module load.
+// gettext can't run at module load.
 function displayModeLabels() {
     return {
         percent: _('Percentage (8%)'),
@@ -21,7 +21,7 @@ function displayModeLabels() {
 export default class NvidiaSmiPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const settings = this.getSettings();
-        window._settings = settings; // keep alive for the window's lifetime
+        window._settings = settings; // keep alive with the window
 
         const page = new Adw.PreferencesPage();
         page.add(this._buildTopBarGroup(settings));

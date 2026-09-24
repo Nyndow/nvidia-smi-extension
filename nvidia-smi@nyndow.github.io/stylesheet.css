@@ -1,7 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 
-/* --- Top bar ------------------------------------------------------------ */
-
 .nvidia-smi-indicator {
     spacing: 4px;
 }
@@ -10,7 +8,6 @@
     font-feature-settings: "tnum";
 }
 
-/* Pressure states: applied to the indicator box, inherited by icon and label */
 .nvidia-smi-warning {
     color: #f8e45c;
 }
@@ -22,8 +19,6 @@
 .nvidia-smi-error {
     color: #9a9996;
 }
-
-/* --- Dropdown: per-GPU summary ------------------------------------------ */
 
 .nvidia-smi-gpu-box {
     spacing: 4px;
@@ -54,8 +49,6 @@
     -bar-fill-color: #e01b24;
 }
 
-/* --- Dropdown: processes ------------------------------------------------ */
-
 .nvidia-smi-process-row {
     spacing: 12px;
     max-width: 380px;
@@ -68,8 +61,6 @@
 .nvidia-smi-process-memory {
     font-feature-settings: "tnum";
 }
-
-/* --- Dropdown: raw output & messages ------------------------------------ */
 
 .nvidia-smi-monospace {
     font-family: monospace;

@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (C) 2026 Nyndow
 
-// Pure parsing/formatting helpers with no GNOME imports, so they can be
-// unit-tested outside the Shell.
-
-/** Fields requested from `nvidia-smi --query-gpu`, in the order parseGpuQuery() expects. */
+// Order must match parseGpuQuery().
 export const GPU_QUERY_FIELDS = [
     'index',
     'name',
@@ -23,15 +20,6 @@ function toNumber(token) {
     return Number.isFinite(value) ? value : null;
 }
 
-/**
- * Parse the CSV emitted by `nvidia-smi --query-gpu=<GPU_QUERY_FIELDS> --format=csv,noheader,nounits`.
- *
- * Fields nvidia-smi reports as "[N/A]" (for example power on laptops) become null.
- *
- * @param {string} csvOutput
- * @returns {Array<{index: number, name: string, memoryUsed: number, memoryTotal: number,
- *   utilization: number|null, temperature: number|null, powerDraw: number|null, powerLimit: number|null}>}
- */
 export function parseGpuQuery(csvOutput) {
     const lines = csvOutput.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     if (lines.length === 0)
@@ -42,7 +30,6 @@ export function parseGpuQuery(csvOutput) {
         if (tokens.length < GPU_QUERY_FIELDS.length)
             throw new Error(`unparseable nvidia-smi line: ${line}`);
 
-        // GPU names never contain commas, but be defensive about extra columns.
         const [index, name, used, total, util, temp, draw, limit] = tokens;
         const memoryUsed = toNumber(used);
         const memoryTotal = toNumber(total);
@@ -62,12 +49,6 @@ export function parseGpuQuery(csvOutput) {
     });
 }
 
-/**
- * Sum VRAM across GPUs.
- *
- * @param {ReturnType<typeof parseGpuQuery>} gpus
- * @returns {{used: number, total: number, fraction: number}}
- */
 export function summarizeVram(gpus) {
     let used = 0;
     let total = 0;
@@ -78,14 +59,6 @@ export function summarizeVram(gpus) {
     return {used, total, fraction: total > 0 ? used / total : 0};
 }
 
-/**
- * Format the top-bar text.
- *
- * @param {number} used MiB
- * @param {number} total MiB
- * @param {string} mode one of DISPLAY_MODES
- * @returns {string}
- */
 export function formatVramLabel(used, total, mode) {
     switch (mode) {
     case 'gib':
@@ -98,14 +71,6 @@ export function formatVramLabel(used, total, mode) {
     }
 }
 
-/**
- * Map a usage fraction to a pressure level.
- *
- * @param {number} fraction 0..1
- * @param {number} warningPercent
- * @param {number} criticalPercent
- * @returns {'critical'|'warning'|null}
- */
 export function pressureLevel(fraction, warningPercent, criticalPercent) {
     const percent = fraction * 100;
     if (criticalPercent > 0 && percent >= criticalPercent)
@@ -115,17 +80,9 @@ export function pressureLevel(fraction, warningPercent, criticalPercent) {
     return null;
 }
 
-// Matches one row of the "Processes:" table of plain `nvidia-smi` output, for both the
-// modern layout (GPU, GI ID, CI ID, PID, Type, Name, Memory) and the pre-450 driver layout
-// without the GI/CI columns. Truncated names start with "..." and memory may be "N/A".
+// Process table row. GI/CI columns are missing on pre-450 drivers.
 const PROCESS_LINE = /^\|\s*(\d+)\s+(?:(?:N\/A|\d+)\s+(?:N\/A|\d+)\s+)?(\d+)\s+([CG+]+|N\/A)\s+(.*?)\s+(?:(\d+)MiB|N\/A)\s*\|$/;
 
-/**
- * Extract the process table from plain `nvidia-smi` output, sorted by memory (desc).
- *
- * @param {string} rawOutput
- * @returns {Array<{gpu: number, pid: number, type: string, name: string, memoryMiB: number|null}>}
- */
 export function parseProcesses(rawOutput) {
     const lines = rawOutput.split('\n');
     const start = lines.findIndex(line => line.includes('Processes:'));
@@ -150,12 +107,6 @@ export function parseProcesses(rawOutput) {
     return processes.sort((a, b) => (b.memoryMiB ?? -1) - (a.memoryMiB ?? -1) || a.pid - b.pid);
 }
 
-/**
- * Turn a (possibly "..."-truncated) path from the process table into a short display name.
- *
- * @param {string} rawName
- * @returns {string}
- */
 export function shortProcessName(rawName) {
     const trimmed = rawName.replace(/^\.\.\./, '');
     const base = trimmed.split('/').filter(part => part.length > 0).pop() ?? trimmed;

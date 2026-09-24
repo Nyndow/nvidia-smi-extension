@@ -25,36 +25,20 @@ import {
 
 Gio._promisify(Gio.Subprocess.prototype, 'communicate_utf8_async', 'communicate_utf8_finish');
 
-/** Consecutive failed polls before the top bar gives up on the last good value. */
 const FAILURES_BEFORE_DEGRADED = 3;
-/** Poll interval used while nvidia-smi keeps failing, so a broken setup isn't spawned every 2 s. */
 const BACKOFF_SECONDS = 30;
-/** Never pin the raw-output pane taller than this while the menu is open (matches stylesheet max-height). */
-const RAW_PANE_MAX_HEIGHT = 480;
+const RAW_PANE_MAX_HEIGHT = 480; // same as max-height in stylesheet.css
 
 const LEVEL_CLASSES = ['nvidia-smi-warning', 'nvidia-smi-critical', 'nvidia-smi-error'];
 const BAR_LEVEL_CLASSES = ['nvidia-smi-bar-warning', 'nvidia-smi-bar-critical'];
 
-// --- nvidia-smi subprocess --------------------------------------------------
-
 class NvidiaSmiError extends Error {
-    /**
-     * @param {'missing'|'failed'|'parse'} kind
-     * @param {string} message
-     */
     constructor(kind, message) {
         super(message);
         this.kind = kind;
     }
 }
 
-/**
- * Run nvidia-smi asynchronously and return its stdout.
- *
- * @param {string[]} args
- * @param {Gio.Cancellable} cancellable
- * @returns {Promise<string>}
- */
 async function runNvidiaSmi(args, cancellable) {
     let proc;
     try {
@@ -68,19 +52,13 @@ async function runNvidiaSmi(args, cancellable) {
 
     const [stdout, stderr] = await proc.communicate_utf8_async(null, cancellable);
     if (!proc.get_successful()) {
-        // The driver error ("NVIDIA-SMI has failed because ...") is printed on stdout.
+        // Driver errors are printed on stdout.
         const firstLine = `${stdout}${stderr}`.trim().split('\n')[0].trim();
         throw new NvidiaSmiError('failed', firstLine || _('nvidia-smi exited with an error'));
     }
     return stdout;
 }
 
-/**
- * Human-readable explanation for the dropdown.
- *
- * @param {Error} error
- * @returns {string}
- */
 function describeFailure(error) {
     switch (error.kind) {
     case 'missing':
@@ -92,27 +70,18 @@ function describeFailure(error) {
     }
 }
 
-/**
- * Resolve a short, untruncated process name from /proc, falling back to what nvidia-smi printed.
- *
- * @param {number} pid
- * @param {string} rawName
- * @returns {string}
- */
 function resolveProcessName(pid, rawName) {
     try {
         const [, bytes] = GLib.file_get_contents(`/proc/${pid}/cmdline`);
         if (bytes.length > 0) {
             const argv0 = new TextDecoder().decode(bytes).split('\0')[0];
             const name = shortProcessName(argv0);
-            // Some processes (Chrome renderers, Postgres workers, ...) rewrite their own
-            // argv to show flags/status in `ps`, so argv0 may not be a real path at all.
-            // A genuine binary name/path never contains whitespace.
+            // Some processes rewrite argv0 (Chrome, Postgres), so skip names with spaces.
             if (name && !/\s/.test(name))
                 return name;
         }
     } catch {
-        // process exited, or /proc not readable: fall through
+        // process gone
     }
     try {
         const [, bytes] = GLib.file_get_contents(`/proc/${pid}/comm`);
@@ -137,9 +106,6 @@ function formatMiB(mib) {
     return `${Math.round(mib).toLocaleString()} MiB`;
 }
 
-// --- Widgets ------------------------------------------------------------------
-
-/** A thin horizontal usage bar drawn with cairo; colours come from the stylesheet. */
 const UsageBar = GObject.registerClass(
 class UsageBar extends St.DrawingArea {
     _init() {
@@ -196,7 +162,6 @@ class UsageBar extends St.DrawingArea {
     }
 });
 
-/** One GPU in the dropdown: name, VRAM figure, usage bar and a line of secondary stats. */
 const GpuRow = GObject.registerClass(
 class GpuRow extends PopupMenu.PopupBaseMenuItem {
     _init() {
@@ -240,7 +205,6 @@ class GpuRow extends PopupMenu.PopupBaseMenuItem {
     }
 });
 
-/** One process in the dropdown: short name, PID/type/GPU detail, memory. */
 const ProcessRow = GObject.registerClass(
 class ProcessRow extends PopupMenu.PopupBaseMenuItem {
     _init(process, showGpu) {
@@ -278,8 +242,6 @@ class ProcessRow extends PopupMenu.PopupBaseMenuItem {
         this.add_child(box);
     }
 });
-
-// --- Indicator ---------------------------------------------------------------
 
 const GpuIndicator = GObject.registerClass(
 class GpuIndicator extends PanelMenu.Button {
@@ -324,8 +286,6 @@ class GpuIndicator extends PanelMenu.Button {
         this._pollGpus();
     }
 
-    // --- construction ---
-
     _buildPanel() {
         this._box = new St.BoxLayout({style_class: 'panel-status-menu-box nvidia-smi-indicator'});
 
@@ -365,7 +325,7 @@ class GpuIndicator extends PanelMenu.Button {
             style_class: 'nvidia-smi-monospace',
         });
         this._rawLabel.clutter_text.line_wrap = false;
-        // St.ScrollView only accepts an StScrollable child (BoxLayout/Viewport), not a bare Label
+        // ScrollView needs a scrollable child, not a bare Label.
         const rawBox = new St.BoxLayout({vertical: true, x_expand: true, y_expand: true});
         rawBox.add_child(this._rawLabel);
         this._rawScroll = new St.ScrollView({
@@ -391,8 +351,6 @@ class GpuIndicator extends PanelMenu.Button {
         this.menu.addMenuItem(settingsItem);
     }
 
-    // --- settings ---
-
     _onSettingsChanged() {
         this._icon.visible = this._settings.get_boolean('show-icon');
         this._applyLabelInterval();
@@ -409,8 +367,6 @@ class GpuIndicator extends PanelMenu.Button {
         return this._failure !== null &&
             (this._failure.kind === 'missing' || this._consecutiveFailures >= FAILURES_BEFORE_DEGRADED);
     }
-
-    // --- polling ---
 
     _applyLabelInterval() {
         const configured = this._settings.get_int('poll-interval');
@@ -500,10 +456,8 @@ class GpuIndicator extends PanelMenu.Button {
         }
     }
 
-    // --- rendering ---
-
     _setLabelText(text) {
-        // Tabular figures keep the label from shifting its neighbours as digits change.
+        // Tabular figures keep the width stable.
         this._label.clutter_text.set_markup(
             `<span font_features="tnum">${GLib.markup_escape_text(text, -1)}</span>`);
     }
@@ -559,8 +513,7 @@ class GpuIndicator extends PanelMenu.Button {
             return;
         this._rawLabel.text = text;
 
-        // Only ever grow the pane while the menu is open, so a changing process
-        // count doesn't make the popup jump around under the pointer.
+        // Only grow while open so the popup doesn't jump.
         const [, natural] = this._rawScroll.get_preferred_height(-1);
         const wanted = Math.min(natural, RAW_PANE_MAX_HEIGHT);
         if (wanted > this._rawPinnedHeight) {
@@ -588,8 +541,6 @@ class GpuIndicator extends PanelMenu.Button {
         for (const process of processes)
             this._processSection.addMenuItem(new ProcessRow(process, showGpu));
     }
-
-    // --- teardown ---
 
     destroy() {
         this._cancellable.cancel();
