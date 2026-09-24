@@ -35,11 +35,6 @@ const RAW_PANE_MAX_HEIGHT = 480;
 const LEVEL_CLASSES = ['nvidia-smi-warning', 'nvidia-smi-critical', 'nvidia-smi-error'];
 const BAR_LEVEL_CLASSES = ['nvidia-smi-bar-warning', 'nvidia-smi-bar-critical'];
 
-// St.BoxLayout's `vertical` is deprecated since GNOME 48; `orientation` doesn't exist before it.
-const VERTICAL_BOX = 'orientation' in St.BoxLayout.prototype
-    ? {orientation: Clutter.Orientation.VERTICAL}
-    : {vertical: true};
-
 // --- nvidia-smi subprocess --------------------------------------------------
 
 class NvidiaSmiError extends Error {
@@ -66,7 +61,7 @@ async function runNvidiaSmi(args, cancellable) {
         proc = Gio.Subprocess.new(['nvidia-smi', ...args],
             Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE);
     } catch (e) {
-        if (e.matches?.(GLib.SpawnError, GLib.SpawnError.NOENT))
+        if (e.matches(GLib.SpawnError, GLib.SpawnError.NOENT))
             throw new NvidiaSmiError('missing', _('nvidia-smi is not installed or not on PATH'));
         throw new NvidiaSmiError('missing', e.message);
     }
@@ -74,10 +69,10 @@ async function runNvidiaSmi(args, cancellable) {
     const [stdout, stderr] = await proc.communicate_utf8_async(null, cancellable);
     if (!proc.get_successful()) {
         // The driver error ("NVIDIA-SMI has failed because ...") is printed on stdout.
-        const firstLine = `${stdout ?? ''}${stderr ?? ''}`.trim().split('\n')[0]?.trim();
+        const firstLine = `${stdout}${stderr}`.trim().split('\n')[0].trim();
         throw new NvidiaSmiError('failed', firstLine || _('nvidia-smi exited with an error'));
     }
-    return stdout ?? '';
+    return stdout;
 }
 
 /**
@@ -106,8 +101,8 @@ function describeFailure(error) {
  */
 function resolveProcessName(pid, rawName) {
     try {
-        const [ok, bytes] = GLib.file_get_contents(`/proc/${pid}/cmdline`);
-        if (ok && bytes.length > 0) {
+        const [, bytes] = GLib.file_get_contents(`/proc/${pid}/cmdline`);
+        if (bytes.length > 0) {
             const argv0 = new TextDecoder().decode(bytes).split('\0')[0];
             const name = shortProcessName(argv0);
             // Some processes (Chrome renderers, Postgres workers, ...) rewrite their own
@@ -120,8 +115,8 @@ function resolveProcessName(pid, rawName) {
         // process exited, or /proc not readable: fall through
     }
     try {
-        const [ok, bytes] = GLib.file_get_contents(`/proc/${pid}/comm`);
-        if (ok && bytes.length > 0)
+        const [, bytes] = GLib.file_get_contents(`/proc/${pid}/comm`);
+        if (bytes.length > 0)
             return new TextDecoder().decode(bytes).trim();
     } catch {
         // fall through
@@ -173,13 +168,12 @@ class UsageBar extends St.DrawingArea {
         const cr = this.get_context();
         const [width, height] = this.get_surface_size();
         const node = this.get_theme_node();
-        const [hasTrack, trackColor] = node.lookup_color('-bar-track-color', false);
-        const [hasFill, fillColor] = node.lookup_color('-bar-fill-color', false);
-        const fg = node.get_foreground_color();
+        const [, trackColor] = node.lookup_color('-bar-track-color', false);
+        const [, fillColor] = node.lookup_color('-bar-fill-color', false);
         const radius = height / 2;
 
-        const setSource = (color, alpha = 1) => {
-            cr.setSourceRGBA(color.red / 255, color.green / 255, color.blue / 255, (color.alpha / 255) * alpha);
+        const setSource = color => {
+            cr.setSourceRGBA(color.red / 255, color.green / 255, color.blue / 255, color.alpha / 255);
         };
         const roundedRect = w => {
             cr.newSubPath();
@@ -189,16 +183,13 @@ class UsageBar extends St.DrawingArea {
         };
 
         roundedRect(width);
-        if (hasTrack)
-            setSource(trackColor);
-        else
-            setSource(fg, 0.25);
+        setSource(trackColor);
         cr.fill();
 
         const fillWidth = Math.round(width * this._fraction);
         if (fillWidth > 0) {
             roundedRect(Math.max(fillWidth, height));
-            setSource(hasFill ? fillColor : fg);
+            setSource(fillColor);
             cr.fill();
         }
         cr.$dispose();
@@ -211,7 +202,7 @@ class GpuRow extends PopupMenu.PopupBaseMenuItem {
     _init() {
         super._init({reactive: false, can_focus: false});
 
-        const box = new St.BoxLayout({...VERTICAL_BOX, x_expand: true, style_class: 'nvidia-smi-gpu-box'});
+        const box = new St.BoxLayout({vertical: true, x_expand: true, style_class: 'nvidia-smi-gpu-box'});
 
         const header = new St.BoxLayout({x_expand: true});
         this._name = new St.Label({style_class: 'nvidia-smi-gpu-name', x_expand: true});
@@ -375,7 +366,7 @@ class GpuIndicator extends PanelMenu.Button {
         });
         this._rawLabel.clutter_text.line_wrap = false;
         // St.ScrollView only accepts an StScrollable child (BoxLayout/Viewport), not a bare Label
-        const rawBox = new St.BoxLayout({...VERTICAL_BOX, x_expand: true, y_expand: true});
+        const rawBox = new St.BoxLayout({vertical: true, x_expand: true, y_expand: true});
         rawBox.add_child(this._rawLabel);
         this._rawScroll = new St.ScrollView({
             style_class: 'nvidia-smi-scrollview',
@@ -522,7 +513,7 @@ class GpuIndicator extends PanelMenu.Button {
             const degraded = this._isDegraded;
             this._setLabelText(degraded ? _('N/A') : '…');
             setLevelClass(this._box, LEVEL_CLASSES, degraded ? 'nvidia-smi-error' : null);
-            this.accessible_name = degraded && this._failure
+            this.accessible_name = degraded
                 ? `${this._extension.metadata.name}: ${this._failure.message}`
                 : this._extension.metadata.name;
             return;
@@ -603,16 +594,12 @@ class GpuIndicator extends PanelMenu.Button {
     destroy() {
         this._cancellable.cancel();
 
-        if (this._labelTimeoutId !== 0) {
-            GLib.source_remove(this._labelTimeoutId);
-            this._labelTimeoutId = 0;
-        }
+        GLib.source_remove(this._labelTimeoutId);
+        this._labelTimeoutId = 0;
         this._stopDetailPolling();
 
-        if (this._settingsChangedId) {
-            this._settings.disconnect(this._settingsChangedId);
-            this._settingsChangedId = 0;
-        }
+        this._settings.disconnect(this._settingsChangedId);
+        this._settingsChangedId = 0;
         this._settings = null;
         this._gpuRows = [];
 
@@ -627,7 +614,7 @@ export default class NvidiaSmiExtension extends Extension {
     }
 
     disable() {
-        this._indicator?.destroy();
+        this._indicator.destroy();
         this._indicator = null;
     }
 }

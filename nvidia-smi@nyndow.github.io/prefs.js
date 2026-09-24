@@ -40,8 +40,7 @@ export default class NvidiaSmiPreferences extends ExtensionPreferences {
         let syncing = false;
         const sync = () => {
             syncing = true;
-            const index = DISPLAY_MODES.indexOf(settings.get_string('display-mode'));
-            modeRow.selected = index < 0 ? 0 : index;
+            modeRow.selected = DISPLAY_MODES.indexOf(settings.get_string('display-mode'));
             syncing = false;
         };
         modeRow.connect('notify::selected', () => {
